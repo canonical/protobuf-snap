@@ -1,45 +1,32 @@
-name: protobuf
-version: unset
+name: protobuf-multipass
 summary: Protocol Buffers compiler
 description: >
   Protocol Buffers (a.k.a., protobuf) are Google's language-neutral,
   platform-neutral, extensible mechanism for serializing structured
   data. You can find protobuf's documentation at
   https://developers.google.com/protocol-buffers/
-version-script: |
-  git -C parts/protobuf/src describe --dirty --always --tags | sed -r 's/v(.*)/\1/g'
+  This is intended for Multipass development.
+
 type: app
-# base: core18
-confinement: classic  # classic to allow protoc to call plugins
+adopt-info: protobuf
+base: core18
+confinement: strict
 grade: stable
+
 apps:
   protoc:
     command: bin/protoc
-    aliases:
-      - protoc
-#     plugs:
-#       - home
-#       - removable-media
     environment:
       PATH: $SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH
       LD_LIBRARY_PATH: $SNAP_LIBRARY_PATH:$SNAP/lib:$LD_LIBRARY_PATH
-  protoc-gen-go:
-    command: bin/protoc-gen-go
-    aliases:
-      - protoc-gen-go
+
 parts:
   protobuf:
     plugin: autotools
-    build-packages:
-      - unzip
-      - curl
-    stage-packages: []
-    # source: https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
     source: https://github.com/protocolbuffers/protobuf.git
     source-type: git
-    # source-branch: 3.11.x
-    source-tag: v3.11.4
-  protoc-gen-go:
-    plugin: go
-    go-packages:
-      - github.com/golang/protobuf/protoc-gen-go
+    source-tag: v3.13.0
+    override-build: |
+      snapcraftctl build
+      VERSION=$( git -C ${SNAPCRAFT_PART_SRC} describe --dirty --always --tags | sed -r 's/v(.*)/\1/g' )
+      snapcraftctl set-version ${VERSION}
